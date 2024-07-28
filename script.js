@@ -1,17 +1,17 @@
 // Load the data from the CSV file
-d3.csv("china-gdp-gross-domestic-product.csv").then(data => {
+d3.csv("china-gdp-cleaned.csv").then(data => {
+    console.log(data); // Log the data to verify it's loaded correctly
+
+    // Parse the data
     data.forEach(d => {
-        d.Year = +d.Year;
-        d.GDP = +d.GDP;
+        d.Year = +d.["Year"];
+        d.GDP = +d["GDP ( Billions of US $)"];
+        d.PerCapita = +d["Per Capita (US $)"];
+        d.AnnualChange = +d["Annual % Change"];
+
     });
 
-    // Define the scenes for narrative visualization
-    const scenes = [
-        { year: 2012, message: "In 2012, China's GDP was 8.53 trillion USD." },
-        { year: 2015, message: "In 2015, China's GDP grew to 11.06 trillion USD." },
-        { year: 2020, message: "By 2020, China's GDP reached 14.34 trillion USD." },
-        { year: 2022, message: "In 2022, China's GDP is estimated to be 17.73 trillion USD." }
-    ];
+    console.log(data); // Log the parsed data
 
     const width = 800;
     const height = 400;
@@ -30,8 +30,6 @@ d3.csv("china-gdp-gross-domestic-product.csv").then(data => {
         .padding(0.1);
 
     const y = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d.GDP)])
-        .nice()
         .range([height, 0]);
 
     svg.append("g")
@@ -39,18 +37,15 @@ d3.csv("china-gdp-gross-domestic-product.csv").then(data => {
         .attr("transform", `translate(0,${height})`)
         .call(d3.axisBottom(x));
 
-    svg.append("g")
-        .attr("class", "y-axis")
-        .call(d3.axisLeft(y));
+    const yAxis = svg.append("g")
+        .attr("class", "y-axis");
 
-    svg.selectAll(".bar")
+    const barGroup = svg.selectAll(".bar")
         .data(data)
         .enter().append("rect")
         .attr("class", "bar")
         .attr("x", d => x(d.Year))
-        .attr("y", d => y(d.GDP))
         .attr("width", x.bandwidth())
-        .attr("height", d => height - y(d.GDP))
         .attr("fill", "#69b3a2")
         .on("mouseover", function(event, d) {
             d3.select(this).attr("fill", "#ff6347");
@@ -66,37 +61,42 @@ d3.csv("china-gdp-gross-domestic-product.csv").then(data => {
             svg.selectAll(".tooltip").remove();
         });
 
-    let currentSceneIndex = 0;
+    function updateBars(metric) {
+        y.domain([0, d3.max(data, d => d[metric])]).nice();
 
-    function updateScene() {
-        const scene = scenes[currentSceneIndex];
+        yAxis.transition().duration(1000).call(d3.axisLeft(y));
 
-        svg.selectAll(".bar")
-            .attr("fill", d => d.Year === scene.year ? "#ff6347" : "#69b3a2");
-
-        svg.selectAll(".annotation").remove();
-        svg.append("text")
-            .attr("class", "annotation")
-            .attr("x", x(scene.year) + x.bandwidth() / 2)
-            .attr("y", y(data.find(d => d.Year === scene.year).GDP) - 20)
-            .attr("text-anchor", "middle")
-            .text(scene.message);
+        barGroup.transition()
+            .duration(1000)
+            .attr("y", d => y(d[metric]))
+            .attr("height", d => height - y(d[metric]))
+            .on("mouseover", function(event, d) {
+                d3.select(this).attr("fill", "#ff6347");
+                svg.append("text")
+                    .attr("class", "tooltip")
+                    .attr("x", x(d.Year) + x.bandwidth() / 2)
+                    .attr("y", y(d[metric]) - 10)
+                    .attr("text-anchor", "middle")
+                    .text(d[metric]);
+            })
+            .on("mouseout", function(event, d) {
+                d3.select(this).attr("fill", "#69b3a2");
+                svg.selectAll(".tooltip").remove();
+            });
     }
 
-    d3.select("body").append("div")
+    const buttons = d3.select("body").append("div")
         .attr("class", "buttons")
         .selectAll("button")
-        .data(["Previous", "Next"])
+        .data(["GDP", "PerCapita", "AnnualChange"])
         .enter().append("button")
         .text(d => d)
         .on("click", function(event, d) {
-            if (d === "Next" && currentSceneIndex < scenes.length - 1) {
-                currentSceneIndex++;
-            } else if (d === "Previous" && currentSceneIndex > 0) {
-                currentSceneIndex--;
-            }
-            updateScene();
+            updateBars(d);
         });
 
-    updateScene();
+    // Initial render
+    updateBars("GDP");
+}).catch(error => {
+    console.error('Error loading or parsing data:', error);
 });
