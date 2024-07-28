@@ -8,7 +8,6 @@ d3.csv("china-gdp-cleaned.csv").then(data => {
         d.GDP = +d["GDP ( Billions of US $)"];
         d.PerCapita = +d["Per Capita (US $)"];
         d.AnnualChange = +d["Annual % Change"];
-
     });
 
     console.log(data); // Log the parsed data
@@ -85,9 +84,7 @@ d3.csv("china-gdp-cleaned.csv").then(data => {
             });
     }
 
-    const buttons = d3.select("body").append("div")
-        .attr("class", "buttons")
-        .selectAll("button")
+    d3.select(".buttons").selectAll("button")
         .data(["GDP", "PerCapita", "AnnualChange"])
         .enter().append("button")
         .text(d => d)

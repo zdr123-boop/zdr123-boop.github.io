@@ -19,7 +19,7 @@ body {
 }
 
 .buttons {
-    margin-top: 20px;
+    margin-top: 20px; /* Add margin to separate buttons from the chart */
 }
 
 button {
