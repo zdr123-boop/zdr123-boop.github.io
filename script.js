@@ -4,7 +4,7 @@ d3.csv("china-gdp-cleaned.csv").then(data => {
 
     // Parse the data
     data.forEach(d => {
-        d.Year = +d.["Year"];
+        d.Year = +d.Year;
         d.GDP = +d["GDP ( Billions of US $)"];
         d.PerCapita = +d["Per Capita (US $)"];
         d.AnnualChange = +d["Annual % Change"];
